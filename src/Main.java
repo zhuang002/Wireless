@@ -9,7 +9,7 @@ import java.util.HashMap;
 public class Main {
 
 	static int m,n,k;
-	static HashMap<Integer, ArrayList<Point>> points=new HashMap<>();
+	static int[][] points;
 	public static void main(String[] args) throws NumberFormatException, IOException {
 		// TODO Auto-generated method stub
 		BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
@@ -17,50 +17,35 @@ public class Main {
 		n = Integer.parseInt(reader.readLine());
 		k = Integer.parseInt(reader.readLine());
 		
-		
+		points = new int[m][n];
 		
 		
 		for (int i=0;i<k;i++) {
 			String line = reader.readLine();
 			String[] parts = line.split(" ");
-			HashMap<Integer,ArrayList<Point>> affectedPoints=getAffectedPoints2(Integer.parseInt(parts[0])-1,Integer.parseInt(parts[1])-1,
+			getAffectedPoints(Integer.parseInt(parts[0])-1,Integer.parseInt(parts[1])-1,
 					Integer.parseInt(parts[2]),Integer.parseInt(parts[3]));
-			for (int key:affectedPoints.keySet()) {
-				if (points.containsKey(key)) {
-					points.get(key).addAll(affectedPoints.get(key));
-				} else {
-					points.put(key, affectedPoints.get(key));
-				}
-			}
 		}
 		
-		for (Integer key:points.keySet()) {
-			Collections.sort(points.get(key), (x,y)->{
-				if (x.x==y.x) {
-					return y.bChange-x.bChange;
-				}
-				return x.x-y.x;
-			});
-		}
 		
 		
 		int maxBandWidth=0;
 		int maxShops=0;
 		
-		for (Integer key:points.keySet()) {
-			ArrayList<Point> list = points.get(key);
-			int currentB = 0;
-			int previousIdx=0;
-			for (int i=0;i<list.size();i++) {
-				Point p = list.get(i);
-				if (maxBandWidth<currentB && p.x>0) {
-					maxBandWidth=currentB;
-					maxShops = p.x-previousIdx;
-				} else if (maxBandWidth==currentB && p.x>0) {
-					maxShops+=p.x-previousIdx;
+		for (int i=0;i<m;i++) {
+			for (int j=1;j<n;j++) {
+				points[i][j] += points[i][j-1];
+			}
+		}
+		
+		for (int i=0;i<m;i++) {
+			for (int j=0;j<n;j++) {
+				if (maxBandWidth<points[i][j]) {
+					maxBandWidth=points[i][j];
+					maxShops=1;
+				} else if (maxBandWidth==points[i][j]){
+					maxShops++;
 				}
-				previousIdx=p.x;
-				currentB+=p.bChange;
 			}
 		}
 
@@ -68,16 +53,15 @@ public class Main {
 		System.out.println(maxShops);
 			
 	}
-	private static HashMap<Integer, ArrayList<Point>> getAffectedPoints(int cX, int cY, int r, int b) {
+	private static void getAffectedPoints(int cX, int cY, int r, int b) {
 		// TODO Auto-generated method stub
-		HashMap<Integer,ArrayList<Point>> pointsReturn=new HashMap<>();
+		
 		int top = -r+cY;
 		if (top<0) top=0;
-		int buttom = r+cY;
-		if (top>=m) buttom=m-1;
+		int bottom = r+cY;
+		if (bottom>=m) bottom=m-1;
 		
-		for (int y=top;y<=buttom;y++) {
-			ArrayList<Point> linePoints = new ArrayList<>();
+		for (int y=top;y<=bottom;y++) {
 			int dy = y-cY;
 			int dx = (int)Math.round(Math.sqrt(r*r-dy*dy));
 			if (dx*dx+dy*dy>r*r) {
@@ -87,14 +71,13 @@ public class Main {
 			
 			int x=-dx+cX;
 			if (x<0) x=0;
-			linePoints.add(new Point(x,b));
+			points[y][x]+=b;
 			
 			x=dx+cX;
-			if (x>=n) x=n-1;
-			linePoints.add(new Point(x+1,-b));
-			pointsReturn.put(y,linePoints);
+			if (x<n-1)
+				points[y][x+1]+=-b;
+		
 		}
-		return pointsReturn;
 	}
 	
 	private static HashMap<Integer, ArrayList<Point>> getAffectedPoints2(int cX, int cY, int r, int b) {
